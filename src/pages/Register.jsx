@@ -3,7 +3,7 @@ import { Footer, Navbar } from "../components";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../supaBaseClient"; // adjust path as needed
 import toast from "react-hot-toast";
-
+import PublicNavbar from "../components/PublicNavbar";
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -48,11 +48,18 @@ const Register = () => {
 
   return (
     <>
-      <Navbar />
+    <PublicNavbar />
       <div className="loginSignUpSection">
         <div className="loginSignUpContainer">
+        <div className="loginSignUpTabs">
+            <p          
+            >
+              Register
+            </p>
+           
+          </div>
           <div className="loginSignUpTabsContentRegister">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} autoComplete="off">
               <input
                 type="text"
                 className="form-control"

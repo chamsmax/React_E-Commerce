@@ -11,11 +11,17 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Filters from "./Filter";
 import { IoFilterSharp, IoClose } from "react-icons/io5";
 import { FaStar } from "react-icons/fa";
+import { FiHeart } from "react-icons/fi";
+import Pagination from "./Pagination";
 import "./Products.css";
 const Products = () => {
   const [data, setData] = useState([]);
   const [filter, setFilter] = useState(data);
   const [loading, setLoading] = useState(false);
+  const [wishList, setWishList] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [postsPerPage] = useState(11);
+
   let componentMounted = true;
   const { user, addToCart } = useAuth(); // get user from context
   const navigate = useNavigate();
@@ -29,6 +35,12 @@ const Products = () => {
   const addProduct = async (product) => {
     await addToCart(product);
   };
+  const handleWishlistClick = (productID) => {
+    setWishList((prevWishlist) => ({
+      ...prevWishlist,
+      [productID]: !prevWishlist[productID],
+    }));
+  };
 
   useEffect(() => {
     let componentMounted = true;
@@ -38,8 +50,7 @@ const Products = () => {
       const { data, error } = await supabase
         .from("products")
         .select("*")
-        .eq("is_active", true)
-        .range(0, 20);
+        .eq("is_active", true);
 
       if (error) {
         console.error("Error fetching products:", error.message);
@@ -72,6 +83,12 @@ const Products = () => {
   const closeDrawer = () => {
     setIsDrawerOpen(false);
   };
+  
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = filter.slice(indexOfFirstPost, indexOfLastPost);
+
+  const paginate = pageNumber => setCurrentPage(pageNumber);
 
   const Loading = () => {
     return (
@@ -96,25 +113,36 @@ const Products = () => {
   const ShowProducts = () => {
     return (
       <>
-         <div className="shopDetailsProductsContainer">
-          {filter.map((product) => (
-              <div className="sdProductContainer">
-                    <div className="sdProductImages">
-                    <Link to={"/product/" + product.id}>
-                <img
-                   className="sdProduct_front"
-                  src={`https://fzliiwigydluhgbuvnmr.supabase.co/storage/v1/object/public/productimages/${product.banner_url}`}
-                  alt="Product"
-                  style={{
-                    width: "250px",
-                    maxHeight: "250px",
-                    objectFit: "contain",
-                    transition: "transform 0.3s ease",
-                  }}
+        <div className="shopDetailsProducts">
+        <div className="shopDetailsProductsContainer">
+  {currentPosts.length === 0 ? (
+     <div className="text-center "
+    >
+  <h3 style={{ color: "#333", fontSize: "1.5rem", marginBottom: "10px" }}>
+        No products found
+      </h3>
+     <p style={{ color: "#666", fontSize: "1rem" }}>
+        Try changing your filters or search criteria.
+      </p>
+   </div>
+  ) : (
+          currentPosts.map((product) => (
+            <div className="sdProductContainer">
+              <div className="sdProductImages">
+                <Link to={"/product/" + product.id}>
+                  <img
+                    className=""
+                    src={`https://fzliiwigydluhgbuvnmr.supabase.co/storage/v1/object/public/productimages/${product.banner_url}`}
+                    alt="Product"
+                    style={{
+                      width: "250px",
+                      maxHeight: "250px",
+                      objectFit: "contain",
+                      transition: "transform 0.3s ease",
+                    }}
+                  />
 
-                />
-                    
-                <img
+                  {/* <img
                    className="sdProduct_back"
                   src={`https://fzliiwigydluhgbuvnmr.supabase.co/storage/v1/object/public/productimages/${product.banner_url}`}
                   alt="Product"
@@ -125,44 +153,82 @@ const Products = () => {
                     transition: "transform 0.3s ease",
                   }}
 
-                />
+                /> */}
                 </Link>
-                 <h4  onClick={() => {
-                      if (!user) {
-                        toast.error("Please login to add products to cart.");
-                        navigate("/login");
-                        return;
-                      }
-                      toast.success("Added to cart");
-                      addProduct(product);
-                    }}>
-                        Add to Cart
-                      </h4>
+                <h4
+                className="bg-light"
+                  onClick={() => {
+                    if (!user) {
+                      toast.error("Please login to add products to cart.");
+                      navigate("/login");
+                      return;
+                    }
+                    toast.success("Added to cart");
+                    addProduct(product);
+                  }}
+                >
+                  Add to Cart
+                </h4>
+              </div>
+              <div className="sdProductInfo">
+                      <div className="sdProductCategoryWishlist">
+                        <p>{product.category}</p>
+                        <FiHeart
+                          onClick={() => handleWishlistClick(product.id)}
+                          style={{
+                            color: wishList[product.id]
+                              ? "red"
+                              : "#767676",
+                            cursor: "pointer",
+                          }}
+                        />
+                      </div>
+              <div className="sdProductNameInfo">
+                <h5>{product.name.substring(0, 22)}</h5>
+              </div>
+
+              <p>$ {product.amount}</p>
+              <div className="sdProductRatingReviews">
+                <div className="sdProductRatingStar">
+                  <FaStar color="#FEC78A" size={10} />
+                  <FaStar color="#FEC78A" size={10} />
+                  <FaStar color="#FEC78A" size={10} />
+                  <FaStar color="#FEC78A" size={10} />
+                  <FaStar color="#FEC78A" size={10} />
                 </div>
-                <div className="sdProductNameInfo">
-                  <h5 >
-                    {product.name.substring(0, 12)}
-                  </h5>
-                </div>
-                
-                  <p >$ {product.amount}</p>
-                  <div className="sdProductRatingReviews">
-                          <div className="sdProductRatingStar">
-                            <FaStar color="#FEC78A" size={10} />
-                            <FaStar color="#FEC78A" size={10} />
-                            <FaStar color="#FEC78A" size={10} />
-                            <FaStar color="#FEC78A" size={10} />
-                            <FaStar color="#FEC78A" size={10} />
-                          </div>
-                          <span>{product.reviews_count}</span>
-                        </div>
+                <span>{product.reviews_count}</span>
+              </div>
+              </div>
             </div>
-          ))}
+          ))
+        )}
+          </div>
         </div>
       </>
     );
   };
-
+  
+  const handleFilterChange = (filters) => {
+    let updatedList = [...data];
+  
+    if (filters.brands && filters.brands.length > 0) {
+      console.log('max');
+      updatedList = updatedList.filter((item) =>
+        filters.brands.includes(item.brand)
+      );
+    }
+  
+    if (filters.priceRange && filters.priceRange.length === 2) {
+      const [min, max] = filters.priceRange;
+      updatedList = updatedList.filter(
+        (item) => item.amount >= min && item.amount <= max
+      );
+    }
+  
+    setFilter(updatedList);
+    setCurrentPage(1); // Reset to first page after filtering
+  };
+  
   return (
     <>
       <div className=" shopDetails">
@@ -170,7 +236,7 @@ const Products = () => {
         {/* Increased padding to p-6 */}
         <div className="shopDetailMain">
           <div className="shopDetails__left">
-            <Filters />
+            <Filters  onApplyFilters={handleFilterChange} />
           </div>
           <div className="shopDetails__right">
             <div className="shopDetailsSorting">
@@ -207,6 +273,12 @@ const Products = () => {
             <div className="row">
               {loading ? <Loading /> : <ShowProducts />}
             </div>
+            <Pagination
+             postsPerPage={postsPerPage}
+             totalPosts={filter.length}
+             paginate={paginate}
+             currentPage={currentPage}
+             />
           </div>
         </div>
       </div>
